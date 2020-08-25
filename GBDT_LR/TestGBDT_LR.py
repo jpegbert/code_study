@@ -17,6 +17,6 @@ def load_data():
 X_train, X_test, y_train, y_test = load_data()
 
 gbdt_lr = GradientBoostingWithLR()
-gbdt_lr_model = gbdt_lr.gbdt_lr_train(X_train, y_train, X_test)
+gbdt_lr_model = gbdt_lr.gbdt_lr_train(X_train, y_train)
 gbdt_lr.model_assessment(gbdt_lr.gbdt_model, X_test, y_test)
 gbdt_lr.gbdt_lr_pred(gbdt_lr_model, X_test, y_test)
