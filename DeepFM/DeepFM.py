@@ -89,10 +89,10 @@ def parse(feat_dict=None, df=None, has_label=False):
 
     if has_label:
         y = df['target'].values.tolist()
-        dfi.drop(['id','target'],axis=1, inplace=True)
+        dfi.drop(['id', 'target'], axis=1, inplace=True)
     else:
         ids = dfi['id'].values.tolist() # 预测样本的ids
-        dfi.drop(['id'],axis=1, inplace=True)
+        dfi.drop(['id'], axis=1, inplace=True)
 
     # dfi是Feature index,大小和dfTrain相同，但是里面的值都是特征对应的编号。
     # dfv是Feature value, 可以是binary(0或1), 也可以是实值float，比如3.14
@@ -168,7 +168,7 @@ config.field_size = len(Xi_train[0])
 ##################################
 
 # 模型参数
-deep_layers = [32,32]
+deep_layers = [32, 32]
 config.embedding_size = 8
 config.deep_layers_activation = tf.nn.relu
 
@@ -179,35 +179,35 @@ tf.set_random_seed(2018)
 # init_weight
 weights = dict()
 # Sparse Features 到 Dense Embedding的全连接权重。[其实是Embedding]
-weights['feature_embedding'] = tf.Variable(initial_value=tf.random_normal(shape=[config.feature_size, config.embedding_size],mean=0,stddev=0.1),
+weights['feature_embedding'] = tf.Variable(initial_value=tf.random_normal(shape=[config.feature_size, config.embedding_size], mean=0, stddev=0.1),
                                            name='feature_embedding',
                                            dtype=tf.float32)
 # Sparse Featues 到 FM Layer中Addition Unit的全连接。 [其实是Embedding,嵌入后维度为1]
-weights['feature_bias'] = tf.Variable(initial_value=tf.random_uniform(shape=[config.feature_size, 1],minval=0.0,maxval=1.0),
+weights['feature_bias'] = tf.Variable(initial_value=tf.random_uniform(shape=[config.feature_size, 1], minval=0.0, maxval=1.0),
                                       name='feature_bias',
                                       dtype=tf.float32)
 # Hidden Layer
 num_layer = len(deep_layers)
 input_size = config.field_size * config.embedding_size
 glorot = np.sqrt(2.0 / (input_size + deep_layers[0])) # glorot_normal: stddev = sqrt(2/(fan_in + fan_out))
-weights['layer_0'] = tf.Variable(initial_value=tf.random_normal(shape=[input_size, deep_layers[0]],mean=0,stddev=glorot),
+weights['layer_0'] = tf.Variable(initial_value=tf.random_normal(shape=[input_size, deep_layers[0]], mean=0, stddev=glorot),
                                  dtype=tf.float32)
-weights['bias_0'] = tf.Variable(initial_value=tf.random_normal(shape=[1, deep_layers[0]],mean=0,stddev=glorot),
+weights['bias_0'] = tf.Variable(initial_value=tf.random_normal(shape=[1, deep_layers[0]], mean=0, stddev=glorot),
                                 dtype=tf.float32)
 for i in range(1, num_layer):
     glorot = np.sqrt(2.0 / (deep_layers[i - 1] + deep_layers[i]))
     # deep_layer[i-1] * deep_layer[i]
-    weights['layer_%d' % i] = tf.Variable(initial_value=tf.random_normal(shape=[deep_layers[i - 1], deep_layers[i]],mean=0,stddev=glorot),
-                                          dtype=tf.float32)
+    weights['layer_%d' % i] = tf.Variable(initial_value=tf.random_normal(shape=[deep_layers[i - 1], deep_layers[i]], mean=0,
+                                                                         stddev=glorot), dtype=tf.float32)
     # 1 * deep_layer[i]
-    weights['bias_%d' % i] = tf.Variable(initial_value=tf.random_normal(shape=[1, deep_layers[i]],mean=0,stddev=glorot),
+    weights['bias_%d' % i] = tf.Variable(initial_value=tf.random_normal(shape=[1, deep_layers[i]], mean=0, stddev=glorot),
                                          dtype=tf.float32)
 # Output Layer
 deep_size = deep_layers[-1]
 fm_size = config.field_size + config.embedding_size
 input_size = fm_size + deep_size
 glorot = np.sqrt(2.0 / (input_size + 1))
-weights['concat_projection'] = tf.Variable(initial_value=tf.random_normal(shape=[input_size,1],mean=0,stddev=glorot),
+weights['concat_projection'] = tf.Variable(initial_value=tf.random_normal(shape=[input_size, 1], mean=0, stddev=glorot),
                                            dtype=tf.float32)
 weights['concat_bias'] = tf.Variable(tf.constant(value=0.01), dtype=tf.float32)
 
@@ -215,7 +215,7 @@ weights['concat_bias'] = tf.Variable(tf.constant(value=0.01), dtype=tf.float32)
 # build_network
 feat_index = tf.placeholder(dtype=tf.int32, shape=[None, config.field_size], name='feat_index') # [None, field_size]
 feat_value = tf.placeholder(dtype=tf.float32, shape=[None, None], name='feat_value') # [None, field_size]
-label = tf.placeholder(dtype=tf.float16, shape=[None,1], name='label')
+label = tf.placeholder(dtype=tf.float16, shape=[None, 1], name='label')
 
 # Sparse Features -> Dense Embedding
 embeddings_origin = tf.nn.embedding_lookup(weights['feature_embedding'], ids=feat_index) # [None, field_size, embedding_size]
@@ -284,12 +284,12 @@ sess.run(tf.global_variables_initializer())
 feed_dict = {
     feat_index: Xi_train,
     feat_value: Xv_train,
-    label:      np.array(y).reshape((-1,1))
+    label:      np.array(y).reshape((-1, 1))
 }
 
 
 for epoch in range(config.epochs):
-    train_loss,opt = sess.run((loss, optimizer), feed_dict=feed_dict)
+    train_loss, opt = sess.run((loss, optimizer), feed_dict=feed_dict)
     print("epoch: {0}, train loss: {1:.6f}".format(epoch, train_loss))
 
 
@@ -302,12 +302,12 @@ dummy_y = [1] * len(Xi_test)
 feed_dict_test = {
     feat_index: Xi_test,
     feat_value: Xv_test,
-    label: np.array(dummy_y).reshape((-1,1))
+    label: np.array(dummy_y).reshape((-1, 1))
 }
 
 prediction = sess.run(out, feed_dict=feed_dict_test)
 
-sub = pd.DataFrame({"id":ids, "pred":np.squeeze(prediction)})
+sub = pd.DataFrame({"id": ids, "pred": np.squeeze(prediction)})
 print("prediction:")
 print(sub)
 
