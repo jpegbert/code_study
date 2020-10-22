@@ -85,7 +85,7 @@ def model_fn(features, labels, mode, params):
             train_phase = False
 
         x_deep = x0
-        for i in range(deep_layers):
+        for i in range(len(deep_layers)):
             x_deep = tf.contrib.layers.fully_connected(inputs=x_deep, num_outputs=deep_layers[i], \
                 weights_regularizer=tf.contrib.layers.l2_regularizer(l2_reg), scope='mlp%d' % i)
             if mode == tf.estimator.ModeKeys.TRAIN:
@@ -144,7 +144,7 @@ model_params = {
     'embedding_size': 64,
     'l2_reg': 0.0005,
     'learning_rate': 0.001,
-    'deep_layers': 3,
+    'deep_layers': [32, 32],
     'cross_layers': 3,
     'dropout': [0.5, 0.5],
     'train_or_debug': "debug",
@@ -156,7 +156,7 @@ model_params = {
 # embedding_size = model_params["embedding_size"]
 # l2_reg = model_params["l2_reg"]
 # learning_rate = model_params["learning_rate"]
-deep_layers = int(model_params["deep_layers"])
+deep_layers = map(int, model_params["deep_layers"])
 # cross_layers = model_params["cross_layers"]
 # dropout = model_params["dropout"]
 
