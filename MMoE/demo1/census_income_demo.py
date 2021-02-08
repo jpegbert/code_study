@@ -20,7 +20,7 @@ from keras.utils import to_categorical
 from keras.callbacks import Callback
 from sklearn.metrics import roc_auc_score
 
-from mmoe import MMoE
+from MMoE.demo1.mmoe import MMoE
 
 SEED = 1
 
