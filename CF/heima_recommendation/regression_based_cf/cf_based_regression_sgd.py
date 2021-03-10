@@ -24,7 +24,8 @@ Baseline设计思想基于以下的假设：
 pred_b_{ui} = mu + b_{u} + b_{i}
 其中：mu是全局的均值，b_{u}是每个用户评分与与平均评分mu的偏置，b_{i}是每部电影所接受的评分与平均评分mu的偏置
 
-这里可以
+这里可以使用随机梯度下降（SGD）也可以使用交替最小二乘（ALS）
+这里是使用随机梯度下降法实现的
 """
 
 
@@ -121,7 +122,6 @@ def accuray(predict_results, method="all"):
 
 
 class BaselineCFBySGD(object):
-
     def __init__(self, number_epochs, alpha, reg, columns=["uid", "iid", "rating"]):
         # 梯度下降最高迭代次数
         self.number_epochs = number_epochs
@@ -174,7 +174,7 @@ class BaselineCFBySGD(object):
         predict_rating = self.global_mean + self.bu[uid] + self.bi[iid]
         return predict_rating
 
-    def test(self,testset):
+    def test(self, testset):
         '''预测测试集数据'''
         for uid, iid, real_rating in testset.itertuples(index=False):
             try:
