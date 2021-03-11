@@ -3,12 +3,24 @@ import pandas as pd
 import numpy as np
 from pprint import pprint
 from gensim.corpora import Dictionary
+from functools import reduce
+import collections
 
 
 '''
+先构建物品画像和用户画像建立，然后基于用户画像和物品画像 实现基于内容的推荐
+
+物品画像
 - 利用tags.csv中每部电影的标签作为电影的候选关键词
 - 利用TF·IDF计算每部电影的标签的tfidf值，选取TOP-N个关键词作为电影画像标签
 - 并将电影的分类词直接作为每部电影的画像标签
+
+用户画像
+1. 提取用户观看列表
+2. 根据观看列表和物品画像为用户匹配关键词，并统计词频
+3. 根据词频排序，最多保留TOP-k个词，这里K设为100，作为用户的标签
+
+基于内容的推荐（内容其实就是从用户和物品中提取的标签）
 '''
 
 
@@ -119,9 +131,72 @@ def create_inverted_table(movie_profile):
     return inverted_table
 
 
+def create_user_profile():
+    """
+    user profile画像建立：
+    1. 提取用户观看列表
+    2. 根据观看列表和物品画像为用户匹配关键词，并统计词频
+    3. 根据词频排序，最多保留TOP-k个词，这里K设为100，作为用户的标签
+    :return: user_profile
+    """
+    watch_record = pd.read_csv("../data/ml-latest-small/ratings.csv", usecols=range(2), dtype={"userId": np.int32, "movieId": np.int32})
+    watch_record = watch_record.groupby("userId").agg(list)
+    # print(watch_record)
+
+    movie_dataset = get_movie_dataset()
+    movie_profile = create_movie_profile(movie_dataset)
+
+    user_profile = {}
+    for uid, mids in watch_record.itertuples():
+        record_movie_profile = movie_profile.loc[list(mids)]
+        counter = collections.Counter(reduce(lambda x, y: list(x)+list(y), record_movie_profile["profile"].values))
+        # 兴趣词
+        interest_words = counter.most_common(50)
+        maxcount = interest_words[0][1]
+        interest_words = [(w, round(c/maxcount, 4)) for w, c in interest_words]
+        user_profile[uid] = interest_words
+
+    return user_profile
+
+
 movie_dataset = get_movie_dataset()
 print(movie_dataset)
+
+# 物品画像
 movie_profile = create_movie_profile(movie_dataset)
 pprint(movie_profile)
+
+# 倒排索引
 inverted_table = create_inverted_table(movie_profile)
 pprint(inverted_table)
+
+# 用户画像
+user_profile = create_user_profile()
+pprint(user_profile)
+
+# 用户评分数据
+watch_record = pd.read_csv("../data/ml-latest-small/ratings.csv", usecols=range(2), dtype={"userId": np.int32, "movieId": np.int32})
+watch_record = watch_record.groupby("userId").agg(list)
+
+# 推荐
+for uid, interest_words in user_profile.items():
+    result_table = {}  # 电影id:[0.2,0.5,0.7]
+    for interest_word, interest_weight in interest_words:
+        related_movies = inverted_table[interest_word]
+        for mid, related_weight in related_movies:
+            _ = result_table.get(mid, [])
+            _.append(interest_weight)  # 只考虑用户的兴趣程度
+            # _.append(related_weight)    # 只考虑兴趣词与电影的关联程度
+            # _.append(interest_weight*related_weight)    # 二者都考虑
+            result_table.setdefault(mid, _)
+
+    rs_result = map(lambda x: (x[0], sum(x[1])), result_table.items())
+    rs_result = sorted(rs_result, key=lambda x: x[1], reverse=True)[:100]
+    print(uid)
+    pprint(rs_result)
+    break
+
+    # 历史数据  ==>  历史兴趣程度 ==>  历史推荐结果       离线推荐    离线计算
+    # 在线推荐 ===>    娱乐(王思聪)   ===>   我 ==>  王思聪 100%
+    # 近线：最近1天、3天、7天           实时计算
+
