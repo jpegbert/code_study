@@ -1,5 +1,6 @@
 pip install tensorflow==1.14.0 -i https://pypi.tuna.tsinghua.edu.cn/simple
 pip install lightgbm -i https://pypi.tuna.tsinghua.edu.cn/simple
 pip install pickle -i https://pypi.tuna.tsinghua.edu.cn/simple
-
+pip install pyyaml -i https://pypi.tuna.tsinghua.edu.cn/simple
+pip install nni -i https://pypi.tuna.tsinghua.edu.cn/simple
 
